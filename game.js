@@ -1,6 +1,14 @@
+/*
+      JAVASCRIPT TETRIS!!!
+      by katreinhart
+      (cc by-sa)
+*/
+
+// Setup the canvas & context
 const canvas = document.getElementById("canvas1");
 const ctx = canvas.getContext("2d");
 
+// Game parameters
 const width = canvas.width;
 const height = canvas.height;
 const widthInBricks = 12;
@@ -8,6 +16,7 @@ const heightInBricks = 20;
 const margin = 10;
 const brickSize = 25;
 
+// Map keycodes to names
 const keyNames = {
   37: "left",
   38: "up",
@@ -16,17 +25,23 @@ const keyNames = {
   32: "space"
 };
 
+// Block definitions. Square, left-S, right-S, left-L, right-L, T, and I shapes
+// This could probably also be called blockTypes
 const blocks = ["sq", "ls", "rs", "ll", "rl", "t", "i"];
+// as well as orientations are implemented as arrays
 const orientations = [0, 1, 2, 3];
 
+// Block Object Constructor Function
 const Block = function(type) {
-  this.type = type;
-  this.xPos = 6;
-  this.yPos = 0;
-  this.orientation = 0;
-  this.active = true;
+  this.type = type;     // refers to the shape defined above
+  this.xPos = 6;        // all blocks originate at the same X-position, center of the canvas
+  this.yPos = 0;        // origin Y-position is at the top
+  this.orientation = 0; // all blocks originate in the default orientation
+  this.active = true;   // Only one block is active at a time - new block is set to active.
 
-  this.components = new Array(4);
+  this.components = new Array(4);  // each block has 4 pieces, I stored these as an array
+
+  // Declare the color based on the type of block.
   switch(type) {
     case "sq":
       this.lineColor = "OrangeRed";
@@ -63,9 +78,14 @@ const Block = function(type) {
 
 }
 
+// Block Update function. This is responsible for declaring the position of each
+// individual piece of the block (or brick of the block.)
+// TODO: This is where the known rotation bug could be fixed -
+//        perhaps by adding a boolean return value if the operation is impossible
 Block.prototype.update = function() {
-
   switch(this.type) {
+
+    // the square has only one rotation, so it's the simplest case.
     case "sq":
       this.components[0] = [this.xPos, this.yPos];
       this.components[1] = [this.xPos + 1, this.yPos];
@@ -73,6 +93,7 @@ Block.prototype.update = function() {
       this.components[3] = [this.xPos + 1, this.yPos + 1];
     break;
 
+    // The LS and RS blocks only have two orientations.
     case "ls":
       if((this.orientation === 0) || (this.orientation === 2)){
         this.components[0] = [this.xPos, this.yPos];
@@ -190,6 +211,9 @@ Block.prototype.update = function() {
   }
 }
 
+// drawBrick is a helper function that just draws a single square given color and position.
+// It is used by the Block class as well as the GameBoard class.
+
 const drawBrick = function(lineColor, fillColor, xPos, yPos) {
   ctx.strokeStyle = lineColor;
   ctx.strokeRect(xPos * brickSize + margin, yPos * brickSize + margin, brickSize, brickSize);
@@ -197,11 +221,14 @@ const drawBrick = function(lineColor, fillColor, xPos, yPos) {
   ctx.fillRect(xPos * brickSize + margin, yPos * brickSize + margin, brickSize, brickSize);
 }
 
+// Block.display - draws a brick for each of the bricks in the block.
 Block.prototype.display = function() {
   for(let i=0; i<4; i++) {
     drawBrick(this.lineColor, this.fillColor, this.components[i][0], this.components[i][1]);
   }
 }
+
+// Block.move is the function that is called in response to keyboard input as well as gravity.
 
 Block.prototype.move = function(dir) {
   if(dir === "left"){
